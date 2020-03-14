@@ -90,6 +90,10 @@ public class JsonPathCli {
 	private void processCommand(String command) {
 		final String[] decomp = command.split(" ");
 		final ICommand cmd = commands.get(decomp[0]);
+		if (cmd == null) {
+			System.out.println("Unknown command");
+			return;
+		}
 		final String[] args = new String[decomp.length - 1];
 		System.arraycopy(decomp, 1, args, 0, args.length);
 		cmd.execute(args);
