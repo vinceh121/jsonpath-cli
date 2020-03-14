@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.InvalidPathException;
 
+import me.vinceh121.jsonpathcli.commands.CommandExit;
 import me.vinceh121.jsonpathcli.commands.CommandHelp;
 import me.vinceh121.jsonpathcli.commands.CommandOpen;
 import me.vinceh121.jsonpathcli.commands.CommandPretty;
@@ -103,6 +104,7 @@ public class JsonPathCli {
 		registerCommand(new CommandOpen(this));
 		registerCommand(new CommandHelp(this));
 		registerCommand(new CommandPretty(this));
+		registerCommand(new CommandExit(this));
 	}
 
 	public DocumentContext getDocument() {
