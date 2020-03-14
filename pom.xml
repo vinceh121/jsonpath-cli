@@ -7,6 +7,10 @@
 	<version>0.1.0</version>
 	<name>jsonpath-cli</name>
 
+	<properties>
+		<java.version>1.8</java.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
