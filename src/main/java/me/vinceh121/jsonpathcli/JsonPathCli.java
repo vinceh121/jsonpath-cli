@@ -1,12 +1,21 @@
 package me.vinceh121.jsonpathcli;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Hashtable;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.InvalidPathException;
+import com.jayway.jsonpath.JsonPath;
 
 import me.vinceh121.jsonpathcli.commands.CommandExit;
 import me.vinceh121.jsonpathcli.commands.CommandHelp;
@@ -23,7 +32,7 @@ public class JsonPathCli {
 	private boolean prettyPrint = true;
 
 	public static void main(String[] args) {
-		final JsonPathCli cli = new JsonPathCli();
+		final JsonPathCli cli = new JsonPathCli(args);
 		try {
 			cli.startConsole();
 		} catch (IOException e) {
@@ -31,7 +40,8 @@ public class JsonPathCli {
 		}
 	}
 
-	public JsonPathCli() {
+	public JsonPathCli(String[] args) {
+		parseCommandLine(args);
 		registerCommands();
 	}
 
@@ -99,12 +109,45 @@ public class JsonPathCli {
 		System.arraycopy(decomp, 1, args, 0, args.length);
 		cmd.execute(args);
 	}
+	
+	private void parseCommandLine(String[] args) {
+		final Options opts = new Options();
+		opts.addOption("h", "help", false, "Show CLI arguments help page");
+		opts.addOption("o", "open", true, "Open a JSON file");
+		final CommandLineParser parse = new DefaultParser();
+		CommandLine cli = null;
+		try {
+			cli = parse.parse(opts, args);
+		} catch (ParseException e) {
+			System.out.println("Failed to parse CLI arguments: " + e.getLocalizedMessage());
+			System.exit(-2);
+		}
+		
+		if (cli.hasOption("h")) {
+			final HelpFormatter help = new HelpFormatter();
+			help.printHelp("JSONPath-CLI", opts);
+			System.exit(0);
+		}
+		
+		if (cli.hasOption("o")) {
+			openDocument(cli.getOptionValue("o"));
+		}
+	}
 
 	private void registerCommands() {
 		registerCommand(new CommandOpen(this));
 		registerCommand(new CommandHelp(this));
 		registerCommand(new CommandPretty(this));
 		registerCommand(new CommandExit(this));
+	}
+	
+	public void openDocument(String path) {
+		try {
+			setDocument(JsonPath.parse(new File(path)));
+			System.out.println("Opened file " + path);
+		} catch (IOException e) {
+			System.out.println("Failed to load: " + e.toString());
+		}
 	}
 
 	public DocumentContext getDocument() {
