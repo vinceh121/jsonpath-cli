@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.EnumSet;
 import java.util.Hashtable;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -12,26 +16,37 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.JsonPathException;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.spi.json.JsonOrgJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.JsonOrgMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 import me.vinceh121.jsonpathcli.commands.CommandExit;
 import me.vinceh121.jsonpathcli.commands.CommandHelp;
 import me.vinceh121.jsonpathcli.commands.CommandOpen;
 import me.vinceh121.jsonpathcli.commands.CommandPretty;
-import net.minidev.json.JSONAwareEx;
-import net.minidev.json.JSONStyle;
 
 public class JsonPathCli {
 	private final Hashtable<String, ICommand> commands = new Hashtable<String, ICommand>();
-	private final JSONStyle stylePrettyPrint = new PrettyJSONStyle();
-	private final JSONStyle styleCompressed = JSONStyle.MAX_COMPRESS;
+	private Configuration conf;
 	private DocumentContext document;
 	private boolean prettyPrint = true;
 
 	public static void main(String[] args) {
+		System.setErr(new PrintStream(new OutputStream() { // TODO change this ugliness
+			@Override
+			public void write(int b) throws IOException {
+			}
+		}));
 		final JsonPathCli cli = new JsonPathCli(args);
 		try {
 			cli.startConsole();
@@ -41,6 +56,7 @@ public class JsonPathCli {
 	}
 
 	public JsonPathCli(String[] args) {
+		configureJsonPath();
 		parseCommandLine(args);
 		registerCommands();
 	}
@@ -83,21 +99,49 @@ public class JsonPathCli {
 		} catch (InvalidPathException pe) {
 			System.out.println("Invalid path: " + pe.getLocalizedMessage());
 			return;
+		} catch (JsonPathException jpe) {
+			System.out.println("JSONPath error: " + jpe.getLocalizedMessage());
+			return;
 		}
 
-		if (result instanceof JSONAwareEx) {
-			final JSONAwareEx js = (JSONAwareEx) result;
-			System.out.println(js.toJSONString(getStyleToUse()));
+		if (result instanceof JSONObject) {
+			final JSONObject js = (JSONObject) result;
+			System.out.println(isPrettyPrint() ? js.toString(4) : js.toString());
+
+		} else if (result instanceof JSONArray) {
+			final JSONArray js = (JSONArray) result;
+			System.out.println(isPrettyPrint() ? js.toString(4) : js.toString());
+
 		} else if (result instanceof Number) {
 			System.out.println(result);
 		} else {
 			System.out.println(result.toString());
-			System.err.println("Result wasn't a json thing, printed anyway the " + result.getClass());
+			System.out.println("Result wasn't a json thing, printed anyway the " + result.getClass());
 		}
 	}
 
-	private JSONStyle getStyleToUse() {
-		return isPrettyPrint() ? stylePrettyPrint : styleCompressed;
+	private void configureJsonPath() {
+		Configuration.setDefaults(new Configuration.Defaults() {
+
+			private final JsonProvider jsonProvider = new JsonOrgJsonProvider();
+			private final MappingProvider mappingProvider = new JsonOrgMappingProvider();
+
+			@Override
+			public JsonProvider jsonProvider() {
+				return jsonProvider;
+			}
+
+			@Override
+			public MappingProvider mappingProvider() {
+				return mappingProvider;
+			}
+
+			@Override
+			public Set<Option> options() {
+				return EnumSet.noneOf(Option.class);
+			}
+		});
+		this.conf = Configuration.defaultConfiguration();
 	}
 
 	private void processCommand(String command) {
@@ -170,6 +214,10 @@ public class JsonPathCli {
 
 	public ICommand[] getRegisteredCommands() {
 		return commands.values().toArray(new ICommand[commands.size()]);
+	}
+
+	public Configuration getConfiguration() {
+		return conf;
 	}
 
 }
