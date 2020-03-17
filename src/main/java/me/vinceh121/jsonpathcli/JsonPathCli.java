@@ -88,6 +88,8 @@ public class JsonPathCli {
 		if (result instanceof JSONAwareEx) {
 			final JSONAwareEx js = (JSONAwareEx) result;
 			System.out.println(js.toJSONString(getStyleToUse()));
+		} else if (result instanceof Number) {
+			System.out.println(result);
 		} else {
 			System.out.println(result.toString());
 			System.err.println("Result wasn't a json thing, printed anyway the " + result.getClass());
@@ -109,7 +111,7 @@ public class JsonPathCli {
 		System.arraycopy(decomp, 1, args, 0, args.length);
 		cmd.execute(args);
 	}
-	
+
 	private void parseCommandLine(String[] args) {
 		final Options opts = new Options();
 		opts.addOption("h", "help", false, "Show CLI arguments help page");
@@ -122,13 +124,13 @@ public class JsonPathCli {
 			System.out.println("Failed to parse CLI arguments: " + e.getLocalizedMessage());
 			System.exit(-2);
 		}
-		
+
 		if (cli.hasOption("h")) {
 			final HelpFormatter help = new HelpFormatter();
 			help.printHelp("JSONPath-CLI", opts);
 			System.exit(0);
 		}
-		
+
 		if (cli.hasOption("o")) {
 			openDocument(cli.getOptionValue("o"));
 		}
@@ -140,7 +142,7 @@ public class JsonPathCli {
 		registerCommand(new CommandPretty(this));
 		registerCommand(new CommandExit(this));
 	}
-	
+
 	public void openDocument(String path) {
 		try {
 			setDocument(JsonPath.parse(new File(path)));

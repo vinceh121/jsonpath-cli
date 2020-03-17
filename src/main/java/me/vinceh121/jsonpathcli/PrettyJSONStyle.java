@@ -18,8 +18,9 @@ public class PrettyJSONStyle extends JSONStyle {
 	@Override
 	public void objectStop(Appendable out) throws IOException {
 		currentIndent--;
-		out.append("}\n");
+		out.append('\n');
 		out.append(getIndentStr());
+		out.append('}');
 	}
 	
 	@Override
@@ -43,8 +44,9 @@ public class PrettyJSONStyle extends JSONStyle {
 	@Override
 	public void arrayStop(Appendable out) throws IOException {
 		currentIndent--;
-		out.append("\n]");
+		out.append('\n');
 		out.append(getIndentStr());
+		out.append(']');
 	}
 	
 	
@@ -56,7 +58,7 @@ public class PrettyJSONStyle extends JSONStyle {
 
 	private String getIndentStr() {
 		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < indent + currentIndent; i++)
+		for (int i = 0; i < indent * currentIndent; i++)
 			sb.append(indentChar);
 		return sb.toString();
 	}
